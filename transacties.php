@@ -7,7 +7,13 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit;
 }
 
-$id = $_GET['id'];
+// Gebruik de gebruiker uit de sessie in plaats van uit de URL
+if (!isset($_SESSION['user']['id'])) {
+    header("location: index.php");
+    exit;
+}
+
+$id = $_SESSION['user']['id'];
 
 // Gebruikersgegevens ophalen
 $stmt = $pdo->prepare("SELECT * FROM user WHERE id = ?");
@@ -24,8 +30,10 @@ $stmt = $pdo->prepare("SELECT * FROM transaction WHERE receiver = ?");
 $stmt->execute([$id]);
 $incomingTransactions = $stmt->fetchAll();
 ?>
+
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,6 +78,7 @@ $incomingTransactions = $stmt->fetchAll();
         </div>
 
         <div class="col-span-1">
+
             <?php if (!empty($outgoingTransactions)): ?>
 
                 <h2 class="text-lg text-center font-bold mb-6">
@@ -81,6 +90,7 @@ $incomingTransactions = $stmt->fetchAll();
                     <?php foreach ($outgoingTransactions as $transaction): ?>
 
                         <div class="flex justify-between mb-2">
+
                             <p>
                                 <?= htmlspecialchars($transaction['description'], ENT_QUOTES, 'UTF-8') ?>
                             </p>
@@ -88,6 +98,7 @@ $incomingTransactions = $stmt->fetchAll();
                             <p>
                                 €<?= number_format($transaction['amount'], 2, ',', '.') ?>
                             </p>
+
                         </div>
 
                     <?php endforeach; ?>
@@ -101,6 +112,7 @@ $incomingTransactions = $stmt->fetchAll();
                 </p>
 
             <?php endif; ?>
+
         </div>
 
         <div class="col-span-1">
