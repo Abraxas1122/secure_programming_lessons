@@ -9,8 +9,17 @@ if(!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true){
 
 // als button is ingedrukt
 if($_SERVER["REQUEST_METHOD"] == "POST"){
-    $ontvanger = $_POST['ontvanger'];
-    $bedrag = $_POST['bedrag'];
+    $ontvanger = trim($_POST['ontvanger']);
+    $bedrag = trim($_POST['bedrag']);
+    $omschrijving = trim($_POST['omschrijving']);
+
+    if (!is_numeric($bedrag)) {
+        $error = "Voer een geldig bedrag in.";
+    } elseif ($bedrag <= 0) {
+        $error = "Het bedrag moet groter zijn dan 0.";
+    } elseif (empty($omschrijving)) {
+        $error = "Voer een omschrijving in.";
+    } else {
 
     // Controleer of de ontvanger bestaat
     $stmt = $pdo->prepare("SELECT * FROM user WHERE username = ?");
@@ -22,7 +31,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         if($_SESSION['user']['balance'] >= $bedrag) {
             // Zet de transactie in de database
             $stmt = $pdo->prepare("INSERT INTO transaction (sender, receiver, amount, description) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$_SESSION['user']['id'], $ontvanger['id'], $bedrag, $_POST['omschrijving']]);
+            $stmt->execute([$_SESSION['user']['id'], $ontvanger['id'], $bedrag, $omschrijving]);
 
             // Haal het saldo van de ontvanger op
             $stmt = $pdo->prepare("SELECT balance FROM user WHERE username = ?");
@@ -56,6 +65,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $error = "Deze gebruiker bestaat niet";
     }
 
+    }
 }
 
 include 'includes/db.php';
@@ -91,7 +101,7 @@ $saldo = $stmt->fetchColumn();
                         €<?php echo number_format($saldo, 2, ',', '.'); ?>
                     </p>
                     <div class="text-center">
-                        <a href="transacties.php?id=<?= $_SESSION['user']['id'] ?>" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        <a href="transacties.php" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                             Transactieoverzicht
                         </a>
                     </div>
@@ -110,7 +120,7 @@ $saldo = $stmt->fetchColumn();
                         </div>
                         <div class="mb-4">
                             <label for="bedrag" class="block text-sm font-medium text-gray-700">Bedrag(€):</label>
-                            <input type="number" id="bedrag" name="bedrag" step="0.01" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                            <input type="number" id="bedrag" name="bedrag" min="0.01" step="0.01" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
                         </div>
                         <div class="mb-4">
                             <label for="omschrijving" class="block text-sm font-medium text-gray-700">Omschrijving:</label>
